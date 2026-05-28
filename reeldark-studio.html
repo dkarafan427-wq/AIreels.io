@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReelDark — Horror Content Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060608;
+  --bg2:#0c0c0f;
+  --surface:#111115;
+  --surface2:#18181e;
+  --surface3:#1f1f27;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.1);
+  --border3:rgba(255,255,255,0.16);
+  --red:#b02020;
+  --red2:#d63031;
+  --red3:#ff4444;
+  --red-dim:rgba(176,32,32,0.12);
+  --red-glow:rgba(214,48,49,0.2);
+  --gold:#9a7d2e;
+  --gold2:#c9a84c;
+  --text:#ede8e0;
+  --text2:#b0a898;
+  --text3:#6b6560;
+  --white:#ffffff;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Crimson Text',Georgia,serif;
+  min-height:100vh;
+  cursor:default;
+  overflow-x:hidden;
+}
+
+/* ── Animated background ── */
+.bg-layer{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+.bg-orb{
+  position:absolute;border-radius:50%;filter:blur(120px);opacity:0.07;
+  animation:drift 20s ease-in-out infinite alternate;
+}
+.bg-orb:nth-child(1){width:600px;height:600px;background:#b02020;top:-200px;left:-200px;animation-duration:18s;}
+.bg-orb:nth-child(2){width:400px;height:400px;background:#3d0000;bottom:-100px;right:-100px;animation-duration:24s;animation-delay:-8s;}
+.bg-orb:nth-child(3){width:300px;height:300px;background:#660000;top:40%;left:60%;animation-duration:15s;animation-delay:-4s;}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,30px) scale(1.1)}}
+
+/* Grain */
+.grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+  animation:grainShift 0.4s steps(1) infinite;
+}
+@keyframes grainShift{
+  0%{background-position:0 0}25%{background-position:-50px 20px}50%{background-position:30px -40px}75%{background-position:-20px 50px}100%{background-position:40px -10px}
+}
+
+/* Scanlines */
+.scanlines{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+}
+
+/* ── Layout ── */
+.app{position:relative;z-index:2;max-width:960px;margin:0 auto;padding:0 1.5rem 6rem;}
+
+/* ── Header ── */
+.header{
+  text-align:center;padding:3.5rem 0 2.5rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0;
+  position:relative;
+}
+.header::before{
+  content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+  width:120px;height:1px;background:var(--red2);
+}
+.header-eyebrow{
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.45em;
+  color:var(--red2);text-transform:uppercase;margin-bottom:1.25rem;
+  opacity:0;animation:fadeUp 0.6s 0.1s forwards;
+}
+.logo{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(36px,7vw,72px);
+  font-weight:900;letter-spacing:0.08em;line-height:1;
+  color:var(--white);
+  opacity:0;animation:fadeUp 0.7s 0.2s forwards;
+  position:relative;display:inline-block;
+}
+.logo .dark{color:var(--red2);}
+.logo-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,rgba(214,48,49,0.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.tagline{
+  font-size:15px;color:var(--text3);font-style:italic;margin-top:0.85rem;
+  letter-spacing:0.05em;
+  opacity:0;animation:fadeUp 0.7s 0.4s forwards;
+}
+.header-ornament{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  margin-top:1.5rem;
+  opacity:0;animation:fadeUp 0.6s 0.5s forwards;
+}
+.ornament-line{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--border3));}
+.ornament-line.r{background:linear-gradient(90deg,var(--border3),transparent);}
+.ornament-diamond{
+  width:6px;height:6px;background:var(--red2);transform:rotate(45deg);
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Nav ── */
+.nav{
+  display:flex;align-items:stretch;background:var(--surface);
+  border:1px solid var(--border);border-top:none;
+  margin-bottom:2.5rem;overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none;}
+.nav-item{
+  flex:1;min-width:90px;padding:1rem 0.5rem 0.85rem;
+  text-align:center;cursor:pointer;
+  border-right:1px solid var(--border);
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.nav-item:last-child{border-right:none;}
+.nav-item::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:var(--red2);transform:scaleX(0);transition:transform 0.3s;
+}
+.nav-item.active::after{transform:scaleX(1);}
+.nav-item.active{background:rgba(214,48,49,0.06);}
+.nav-item.done .nav-num{color:var(--gold2);}
+.nav-item.done .nav-label{color:var(--text3);}
+.nav-num{
+  font-family:'Cinzel',serif;font-size:18px;font-weight:600;
+  color:var(--text3);display:block;margin-bottom:3px;
+  transition:color 0.2s;
+}
+.nav-item.active .nav-num{color:var(--red3);}
+.nav-label{
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.15em;
+  color:var(--text3);text-transform:uppercase;
+  transition:color 0.2s;display:block;
+}
+.nav-item.active .nav-label{color:var(--text2);}
+.nav-check{
+  display:none;font-size:10px;color:var(--gold2);margin-top:2px;
+}
+.nav-item.done .nav-check{display:block;}
+
+/* ── Panels ── */
+.panel{display:none;animation:panelIn 0.35s ease;}
+.panel.active{display:block;}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:2px;padding:1.5rem;margin-bottom:1.25rem;
+  position:relative;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+  background:linear-gradient(180deg,var(--red) 0%,transparent 100%);
+  opacity:0;transition:opacity 0.2s;
+}
+.card:hover::before{opacity:1;}
+
+.card-label{
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.3em;
+  color:var(--red2);text-transform:uppercase;
+  margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;
+}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── Tags ── */
+.tags-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:0.25rem;}
+.tag{
+  background:transparent;border:1px solid var(--border2);border-radius:0;
+  padding:5px 14px;font-size:13px;color:var(--text3);
+  cursor:pointer;transition:all 0.15s;
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.08em;
+}
+.tag:hover{border-color:var(--red);color:var(--text2);}
+.tag.sel{
+  background:var(--red-dim);border-color:var(--red2);color:var(--text);
+}
+
+/* ── Form ── */
+select,textarea,input[type=text]{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:0;color:var(--text);font-family:'Crimson Text',serif;
+  font-size:16px;padding:0.7rem 1rem;outline:none;
+  transition:border-color 0.2s,background 0.2s;
+  -webkit-appearance:none;
+}
+select:focus,textarea:focus,input[type=text]:focus{
+  border-color:var(--red2);background:var(--surface3);
+}
+textarea{resize:vertical;min-height:90px;line-height:1.65;}
+select{
+  cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6560'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:2.5rem;
+}
+option{background:#1a1a1f;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+.field-label{font-size:13px;color:var(--text3);margin-bottom:6px;font-style:italic;}
+
+/* ── Buttons ── */
+.btn{
+  padding:0.85rem 1.5rem;border-radius:0;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;
+  text-transform:uppercase;transition:all 0.2s;border:none;
+}
+.btn-primary{
+  background:var(--red2);color:#fff;
+  box-shadow:0 0 0 0 rgba(214,48,49,0);
+}
+.btn-primary:hover{
+  background:var(--red3);
+  box-shadow:0 0 20px rgba(214,48,49,0.3);
+  transform:translateY(-1px);
+}
+.btn-primary:active{transform:translateY(0);}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-wide{width:100%;}
+
+.btn-ghost{
+  background:transparent;color:var(--text3);
+  border:1px solid var(--border2);
+}
+.btn-ghost:hover{border-color:var(--red);color:var(--text2);}
+.btn-ghost:disabled{opacity:0.3;cursor:not-allowed;}
+
+.btn-gold{
+  background:transparent;color:var(--gold2);border:1px solid var(--gold);
+}
+.btn-gold:hover{background:rgba(154,125,46,0.1);border-color:var(--gold2);}
+
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;align-items:center;}
+
+/* ── Output blocks ── */
+.output-block{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:1.25rem;font-size:15px;line-height:1.85;color:var(--text);
+  white-space:pre-wrap;min-height:60px;position:relative;border-radius:0;
+}
+.output-block.empty{color:var(--text3);font-style:italic;}
+
+/* ── Spinner ── */
+.spinner{
+  display:inline-block;width:14px;height:14px;vertical-align:middle;
+  border:1.5px solid rgba(255,255,255,0.1);border-top-color:var(--red2);
+  border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Scene cards ── */
+.scene-grid{display:flex;flex-direction:column;gap:10px;}
+.scene-card{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:1.1rem 1.25rem;display:grid;
+  grid-template-columns:32px 1fr;gap:12px;align-items:start;
+}
+.scene-n{
+  font-family:'Cinzel',serif;font-size:11px;color:var(--red2);
+  padding-top:3px;letter-spacing:0.1em;
+}
+.scene-body{font-size:14px;line-height:1.7;color:var(--text);}
+.scene-pill{
+  display:inline-block;background:rgba(176,32,32,0.15);
+  border:1px solid rgba(176,32,32,0.3);color:var(--red2);
+  font-size:10px;padding:1px 8px;margin-bottom:5px;margin-right:4px;
+  font-family:'Cinzel',serif;letter-spacing:0.06em;
+}
+
+/* ── Caption preview phone ── */
+.phone-frame{
+  width:180px;margin:0 auto;
+  background:#000;border:2px solid #2a2a2a;border-radius:28px;
+  overflow:hidden;aspect-ratio:9/16;position:relative;
+  box-shadow:0 0 40px rgba(0,0,0,0.6),inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+.phone-notch{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:60px;height:14px;background:#111;border-radius:8px;z-index:10;
+}
+.phone-screen{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,#0a0005 0%,#1a0008 50%,#050005 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding:0 12px 32px;
+}
+.phone-vignette{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.7) 100%);
+}
+.phone-captions{position:relative;z-index:2;text-align:center;}
+.phone-caption-line{
+  display:block;
+  background:rgba(0,0,0,0.8);
+  color:#fff;font-family:'Crimson Text',serif;font-weight:600;
+  font-size:12px;line-height:1.4;padding:2px 8px;
+  margin-bottom:2px;border-radius:2px;
+}
+.phone-caption-line.red-style{background:rgba(176,32,32,0.9);}
+.phone-progress{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:rgba(255,255,255,0.1);
+}
+.phone-progress-bar{
+  height:100%;background:var(--red2);width:0%;
+  transition:width 0.1s;
+}
+
+/* ── Music panel ── */
+.music-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:560px){.music-grid{grid-template-columns:1fr;}}
+.music-card{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:1rem 1.1rem;cursor:pointer;transition:all 0.15s;
+}
+.music-card:hover,.music-card.sel{border-color:var(--red);background:var(--red-dim);}
+.music-card-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--text2);margin-bottom:4px;}
+.music-card-desc{font-size:13px;color:var(--text3);font-style:italic;line-height:1.5;}
+.music-card-meta{
+  display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;
+}
+.music-tag{
+  font-size:10px;padding:2px 8px;border:1px solid var(--border2);
+  color:var(--text3);font-family:'Cinzel',serif;letter-spacing:0.06em;
+}
+
+/* ── Thumbnail ── */
+.thumb-preview{
+  background:#000;border:1px solid var(--border2);
+  aspect-ratio:16/9;max-width:380px;margin:0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;border-radius:2px;
+}
+.thumb-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,#0a0005 0%,#1a0008 40%,#060008 100%);
+}
+.thumb-overlay{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(140,0,0,0.25),transparent 60%);}
+.thumb-title{
+  position:relative;z-index:2;text-align:center;padding:1rem;
+  font-family:'Cinzel',serif;font-size:clamp(14px,3vw,22px);
+  font-weight:900;color:#fff;line-height:1.2;letter-spacing:0.04em;
+}
+.thumb-subtitle{
+  position:relative;z-index:2;font-family:'Crimson Text',serif;
+  font-style:italic;color:var(--text2);font-size:12px;margin-top:4px;
+}
+.thumb-num{
+  position:absolute;top:10px;right:12px;z-index:2;
+  font-family:'Cinzel Decorative',serif;font-size:28px;font-weight:900;
+  color:var(--red2);opacity:0.8;
+}
+
+/* ── Schedule ── */
+.schedule-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+@media(max-width:560px){.schedule-grid{grid-template-columns:repeat(4,1fr);}}
+.sched-day{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:0.65rem 0.4rem;text-align:center;border-radius:0;
+}
+.sched-day.post{border-color:var(--red);background:var(--red-dim);}
+.sched-day.post .sched-d{color:var(--red3);}
+.sched-day-name{font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;color:var(--text3);margin-bottom:4px;}
+.sched-d{font-size:16px;font-weight:600;color:var(--text2);}
+.sched-label{font-size:9px;color:var(--red2);margin-top:3px;font-family:'Cinzel',serif;}
+
+/* ── Export ── */
+.export-section{margin-bottom:1.5rem;}
+.export-section h3{
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.25em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:0.65rem;
+  padding-bottom:0.5rem;border-bottom:1px solid var(--border);
+}
+.export-block{
+  background:var(--bg2);border:1px solid var(--border);
+  padding:1.1rem 1.25rem;font-size:14px;line-height:1.8;
+  color:var(--text);white-space:pre-wrap;position:relative;
+  font-family:'Crimson Text',serif;
+}
+.copy-corner{
+  position:absolute;top:8px;right:8px;
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;
+  color:var(--text3);cursor:pointer;padding:4px 10px;
+  border:1px solid var(--border2);background:var(--surface);
+  transition:all 0.15s;
+}
+.copy-corner:hover{color:var(--red2);border-color:var(--red);}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:1.5rem 0;position:relative;}
+.divider::before{
+  content:'✦';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:10px;color:var(--text3);background:var(--bg);padding:0 12px;
+}
+
+/* ── Alert ── */
+.alert{
+  background:rgba(176,32,32,0.07);border:1px solid rgba(176,32,32,0.2);
+  border-left:3px solid var(--red2);
+  padding:0.85rem 1rem;font-size:14px;color:#c49090;
+  font-style:italic;margin-bottom:1.25rem;border-radius:0;
+}
+
+/* ── Bottom nav ── */
+.bottom-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);
+}
+
+/* ── Progress bar ── */
+.progress-bar{
+  height:2px;background:var(--border);margin-bottom:2.5rem;
+  position:relative;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--red),var(--red3));
+  transition:width 0.5s ease;
+}
+
+/* ── Status badge ── */
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--red-dim);border:1px solid rgba(176,32,32,0.25);
+  padding:4px 14px;font-family:'Cinzel',serif;font-size:9px;
+  letter-spacing:0.12em;color:var(--red2);
+}
+.status-dot{
+  width:5px;height:5px;background:var(--red3);border-radius:50%;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:2rem;right:2rem;z-index:100;
+  background:var(--surface);border:1px solid var(--red);
+  padding:0.75rem 1.25rem;font-family:'Cinzel',serif;font-size:10px;
+  letter-spacing:0.1em;color:var(--text2);
+  transform:translateY(20px);opacity:0;
+  transition:all 0.3s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border3);}
+
+/* ── Step complete indicator ── */
+.step-complete{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.15em;
+  color:var(--gold2);margin-left:auto;
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+<div class="grain"></div>
+<div class="scanlines"></div>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">Horror Content Studio · Est. 2025</div>
+    <div class="logo">
+      REEL<span class="dark">DARK</span>
+      <div class="logo-glow"></div>
+    </div>
+    <div class="tagline">Faceless horror shorts — scripted, scored, captioned & scheduled</div>
+    <div class="header-ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line r"></div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:14%"></div></div>
+
+  <!-- Nav -->
+  <div class="nav" id="nav">
+    <div class="nav-item active" onclick="goStep(0)">
+      <span class="nav-num">01</span>
+      <span class="nav-label">Setup</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(1)">
+      <span class="nav-num">02</span>
+      <span class="nav-label">Script</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(2)">
+      <span class="nav-num">03</span>
+      <span class="nav-label">Scenes</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(3)">
+      <span class="nav-num">04</span>
+      <span class="nav-label">Captions</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(4)">
+      <span class="nav-num">05</span>
+      <span class="nav-label">Music</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(5)">
+      <span class="nav-num">06</span>
+      <span class="nav-label">Thumbnail</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(6)">
+      <span class="nav-num">07</span>
+      <span class="nav-label">Schedule</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+    <div class="nav-item" onclick="goStep(7)">
+      <span class="nav-num">08</span>
+      <span class="nav-label">Export</span>
+      <div class="nav-check">✦ Done</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 1: SETUP
+  ════════════════════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+
+    <div class="card">
+      <div class="card-label">Horror Genre</div>
+      <div class="tags-row" id="genre-tags">
+        <div class="tag sel" onclick="selTag(this,'genre')">Paranormal</div>
+        <div class="tag" onclick="selTag(this,'genre')">Tech Horror</div>
+        <div class="tag" onclick="selTag(this,'genre')">Creepypasta</div>
+        <div class="tag" onclick="selTag(this,'genre')">True Crime Style</div>
+        <div class="tag" onclick="selTag(this,'genre')">Psychological</div>
+        <div class="tag" onclick="selTag(this,'genre')">Urban Legend</div>
+        <div class="tag" onclick="selTag(this,'genre')">Supernatural</div>
+        <div class="tag" onclick="selTag(this,'genre')">Found Footage</div>
+        <div class="tag" onclick="selTag(this,'genre')">Cosmic Horror</div>
+        <div class="tag" onclick="selTag(this,'genre')">Body Horror</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Platform & Format</div>
+      <div class="grid2">
+        <div>
+          <div class="field-label">Platform</div>
+          <select id="platform">
+            <option>YouTube Shorts</option>
+            <option>Instagram Reels</option>
+            <option>TikTok</option>
+            <option>All Platforms</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Length</div>
+          <select id="length">
+            <option>30 seconds</option>
+            <option selected>45 seconds</option>
+            <option>60 seconds</option>
+            <option>90 seconds</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Narrative Tone</div>
+      <div class="tags-row" id="tone-tags">
+        <div class="tag sel" onclick="selTag(this,'tone')">Slow Burn</div>
+        <div class="tag" onclick="selTag(this,'tone')">Jump Scare Build</div>
+        <div class="tag" onclick="selTag(this,'tone')">Unsettling Quiet</div>
+        <div class="tag" onclick="selTag(this,'tone')">Reddit Story</div>
+        <div class="tag" onclick="selTag(this,'tone')">Narrated Tale</div>
+        <div class="tag" onclick="selTag(this,'tone')">Cold & Clinical</div>
+        <div class="tag" onclick="selTag(this,'tone')">Whispered Dread</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Narrator Voice</div>
+      <div class="tags-row" id="voice-tags">
+        <div class="tag sel" onclick="selTag(this,'voice')">Deep Male</div>
+        <div class="tag" onclick="selTag(this,'voice')">Female Whisper</div>
+        <div class="tag" onclick="selTag(this,'voice')">Neutral Calm</div>
+        <div class="tag" onclick="selTag(this,'voice')">Young Scared</div>
+        <div class="tag" onclick="selTag(this,'voice')">Elderly Raspy</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Story Seed <span style="color:var(--text3);font-family:'Crimson Text',serif;font-size:13px;font-style:italic;letter-spacing:0;text-transform:none;"> — optional</span></div>
+      <textarea id="seed" placeholder="e.g. A woman keeps getting voicemails from her own number... or leave blank for a random original story"></textarea>
+    </div>
+
+    <button class="btn btn-primary btn-wide" onclick="goStep(1)">Begin Creation →</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 2: SCRIPT
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="alert">Your voiceover script is written for faceless delivery. Paste directly into CapCut TTS, ElevenLabs, or TikTok's text-to-speech.</div>
+
+    <div class="card">
+      <div class="card-label">Generated Script</div>
+      <div class="output-block empty" id="script-out" style="min-height:220px;">Generate your script below.</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateScript()" id="gen-script-btn" style="flex:1">Generate Script</button>
+        <button class="btn btn-ghost" onclick="generateScript()">Regenerate</button>
+        <button class="btn btn-ghost" onclick="copyEl('script-out')">Copy</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Voiceover Direction</div>
+      <div class="output-block empty" id="vo-out" style="font-style:italic;font-size:14px;min-height:60px;">Generate script first...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Hook Analysis</div>
+      <div class="output-block empty" id="hook-out" style="font-size:14px;min-height:60px;">Generate script first...</div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(0)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(2)">Scenes →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 3: SCENES
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="card">
+      <div class="card-label">Scene-by-Scene Breakdown</div>
+      <div class="field-label" style="margin-bottom:1rem;">Exact footage search terms + overlay text + color grades for CapCut</div>
+      <div id="scenes-out"><div class="output-block empty">Generate your script in Step 2 first, then get scene breakdown here.</div></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateScenes()" id="gen-scenes-btn" style="flex:1">Generate Scene Breakdown</button>
+        <button class="btn btn-ghost" onclick="copyScenes()">Copy All</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(3)">Captions →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 4: CAPTIONS
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="card">
+      <div class="card-label">Caption Style</div>
+      <div class="tags-row" id="cap-tags">
+        <div class="tag sel" onclick="selTag(this,'cap');updateCapStyle()">Bold White</div>
+        <div class="tag" onclick="selTag(this,'cap');updateCapStyle()">Blood Red</div>
+        <div class="tag" onclick="selTag(this,'cap');updateCapStyle()">Typewriter</div>
+        <div class="tag" onclick="selTag(this,'cap');updateCapStyle()">Subtitle Clean</div>
+        <div class="tag" onclick="selTag(this,'cap');updateCapStyle()">Horror Drip</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 180px;gap:1.25rem;align-items:start;">
+      <div>
+        <div class="card">
+          <div class="card-label">Caption Lines</div>
+          <div class="output-block empty" id="captions-out" style="min-height:160px;font-size:14px;">Generate captions below.</div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="generateCaptions()" id="gen-cap-btn" style="flex:1">Generate Captions</button>
+            <button class="btn btn-ghost" onclick="copyEl('captions-out')">Copy</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">CapCut Instructions</div>
+          <div class="output-block empty" id="capcut-out" style="font-size:13px;font-style:italic;min-height:60px;">Generate captions first...</div>
+        </div>
+      </div>
+      <div>
+        <div class="phone-frame" id="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-vignette"></div>
+            <div class="phone-captions" id="phone-caps">
+              <span class="phone-caption-line">Preview</span>
+              <span class="phone-caption-line">appears here</span>
+            </div>
+          </div>
+          <div class="phone-progress"><div class="phone-progress-bar" id="prog-bar"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(4)">Music →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 5: MUSIC
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="card">
+      <div class="card-label">Music Recommendations</div>
+      <div id="music-out">
+        <div class="output-block empty">Generate your script first, then get music recommendations here.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateMusic()" id="gen-music-btn" style="flex:1">Get Music Recommendations</button>
+        <button class="btn btn-ghost" onclick="copyEl('music-text')">Copy</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Sound Design Notes</div>
+      <div class="output-block empty" id="sound-out" style="font-size:14px;min-height:80px;">Generate music first...</div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(5)">Thumbnail →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 6: THUMBNAIL
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="card">
+      <div class="card-label">Thumbnail Text Generator</div>
+      <div id="thumb-titles-out">
+        <div class="output-block empty">Generate thumbnail titles below.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateThumbnail()" id="gen-thumb-btn" style="flex:1">Generate Thumbnail Concepts</button>
+        <button class="btn btn-ghost" onclick="copyEl('thumb-raw')">Copy Titles</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Thumbnail Preview</div>
+      <div class="thumb-preview" id="thumb-preview">
+        <div class="thumb-bg"></div>
+        <div class="thumb-overlay"></div>
+        <div class="thumb-num" id="thumb-num">#1</div>
+        <div class="thumb-title" id="thumb-title">Generate<br>Thumbnail</div>
+        <div class="thumb-subtitle" id="thumb-sub">Horror Short</div>
+      </div>
+      <div style="text-align:center;margin-top:0.75rem;">
+        <div class="tags-row" id="thumb-pick" style="justify-content:center;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Thumbnail Design Brief</div>
+      <div class="output-block empty" id="thumb-brief" style="font-size:14px;min-height:100px;">Generate thumbnail concepts first...</div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(4)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(6)">Schedule →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 7: SCHEDULE
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-6">
+    <div class="card">
+      <div class="card-label">Posting Frequency</div>
+      <div class="tags-row" id="freq-tags">
+        <div class="tag" onclick="selTag(this,'freq')">Daily</div>
+        <div class="tag sel" onclick="selTag(this,'freq')">3x / Week</div>
+        <div class="tag" onclick="selTag(this,'freq')">2x / Week</div>
+        <div class="tag" onclick="selTag(this,'freq')">Weekly</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Best Posting Times</div>
+      <div class="tags-row" id="tz-tags" style="margin-bottom:0.75rem;">
+        <div class="tag sel" onclick="selTag(this,'tz')">EST (New York)</div>
+        <div class="tag" onclick="selTag(this,'tz')">PST (LA)</div>
+        <div class="tag" onclick="selTag(this,'tz')">GMT (London)</div>
+        <div class="tag" onclick="selTag(this,'tz')">CET (Europe)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">4-Week Content Calendar</div>
+      <div id="schedule-out">
+        <div class="output-block empty">Generate your schedule below.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateSchedule()" id="gen-sched-btn" style="flex:1">Generate Schedule</button>
+        <button class="btn btn-ghost" onclick="copyEl('sched-raw')">Copy</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Growth Strategy</div>
+      <div class="output-block empty" id="growth-out" style="font-size:14px;min-height:80px;">Generate schedule first...</div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(5)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(7)">Export →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       STEP 8: EXPORT
+  ════════════════════════════════════════════ -->
+  <div class="panel" id="panel-7">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div class="status-badge"><div class="status-dot"></div>Complete Content Pack</div>
+    </div>
+
+    <div id="export-all">
+      <div class="output-block empty">Complete the previous steps, then build your export pack.</div>
+    </div>
+
+    <div class="btn-row" style="margin-top:1.5rem;justify-content:center;">
+      <button class="btn btn-primary" onclick="buildExport()" id="build-exp-btn">Build Full Export Pack</button>
+      <button class="btn btn-ghost" onclick="copyFullExport()">Copy Everything</button>
+      <button class="btn btn-gold" onclick="downloadExport()">Download .txt</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="text-align:center;">
+      <button class="btn btn-ghost" onclick="startOver()">✦ Start New Reel</button>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="btn btn-ghost" onclick="goStep(6)">← Back</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Toast -->
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+let S = {
+  step: 0,
+  script: '',
+  voDir: '',
+  hook: '',
+  scenes: [],
+  captions: '',
+  capStyle: 'Bold White',
+  music: '',
+  soundNotes: '',
+  thumbTitles: [],
+  thumbBrief: '',
+  schedule: '',
+  growth: '',
+  exportPack: ''
+};
+
+const STEPS = 8;
+
+function getSettings() {
+  return {
+    genre: document.querySelector('#genre-tags .tag.sel')?.textContent.trim() || 'Paranormal',
+    tone: document.querySelector('#tone-tags .tag.sel')?.textContent.trim() || 'Slow Burn',
+    voice: document.querySelector('#voice-tags .tag.sel')?.textContent.trim() || 'Deep Male',
+    platform: document.getElementById('platform').value,
+    length: document.getElementById('length').value,
+    seed: document.getElementById('seed').value.trim()
+  };
+}
+
+function goStep(n) {
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  document.querySelectorAll('.nav-item').forEach((item,i) => {
+    item.classList.toggle('active', i===n);
+    item.classList.toggle('done', i<n);
+  });
+  S.step = n;
+  const pct = Math.round(((n+1)/STEPS)*100);
+  document.getElementById('progress').style.width = pct + '%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selTag(el, group) {
+  document.querySelectorAll(`#${group}-tags .tag`).forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function updateCapStyle() {
+  S.capStyle = document.querySelector('#cap-tags .tag.sel')?.textContent.trim() || 'Bold White';
+  refreshPhonePreview();
+}
+
+function refreshPhonePreview() {
+  if (!S.captions) return;
+  const lines = S.captions.split('\n').filter(l=>l.trim()).slice(0,3);
+  const isRed = S.capStyle === 'Blood Red' || S.capStyle === 'Horror Drip';
+  document.getElementById('phone-caps').innerHTML = lines.map(l =>
+    `<span class="phone-caption-line${isRed?' red-style':''}">${l.trim()}</span>`
+  ).join('');
+}
+
+async function callClaude(prompt, maxTokens=1200) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      messages: [{role:'user', content: prompt}]
+    })
+  });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  return data.content.map(b => b.text || '').join('');
+}
+
+function setLoading(elId, msg) {
+  const el = document.getElementById(elId);
+  if (el) { el.innerHTML = `<span class="spinner"></span>${msg}`; el.classList.remove('empty'); }
+}
+
+function setText(elId, text) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('empty');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || 'Copied to clipboard';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function copyEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast('Copied!'));
+}
+
+// ─── GENERATE SCRIPT ───
+async function generateScript() {
+  const cfg = getSettings();
+  const btn = document.getElementById('gen-script-btn');
+  btn.disabled = true;
+  setLoading('script-out', 'Writing your horror script...');
+  setLoading('vo-out', 'Analysing...');
+  setLoading('hook-out', 'Analysing hook...');
+
+  const seed = cfg.seed ? `Story seed: "${cfg.seed}"` : 'Invent a completely original, highly unnerving story with a surprising twist.';
+
+  const prompt = `You are an elite horror writer specialising in viral faceless short-form video content.
+
+Write a ${cfg.length} voiceover-ready horror script.
+Genre: ${cfg.genre}
+Tone: ${cfg.tone}
+Narrator voice: ${cfg.voice}
+Platform: ${cfg.platform}
+${seed}
+
+STRICT RULES:
+- First 3 seconds must be an irresistible hook that stops the scroll
+- Build dread through specific sensory details — no generic horror clichés
+- Use second person ("you") or first person ("I") for maximum immersion
+- Mark natural pauses as [PAUSE]
+- End with a twist or a chilling final line that lingers
+- 130–180 words total
+
+After the script output exactly these two labeled sections:
+VOICEOVER DIRECTION: [2 sentences on vocal tone, pacing, and emotional delivery]
+HOOK ANALYSIS: [1–2 sentences explaining why the opening hook works psychologically]
+
+Output only the script and the two labeled sections. No extra commentary.`;
+
+  try {
+    const result = await callClaude(prompt, 900);
+    const voParts = result.split('VOICEOVER DIRECTION:');
+    S.script = voParts[0].trim();
+    const hookParts = (voParts[1]||'').split('HOOK ANALYSIS:');
+    S.voDir = hookParts[0].trim();
+    S.hook = (hookParts[1]||'').trim();
+    setText('script-out', S.script);
+    setText('vo-out', S.voDir || 'Speak slowly. Let silence do the work between sentences.');
+    setText('hook-out', S.hook || 'Opens with a personal, specific detail that immediately creates dread.');
+  } catch(e) {
+    setText('script-out', 'Error generating script. Please try again.');
+  }
+  btn.disabled = false;
+}
+
+// ─── GENERATE SCENES ───
+async function generateScenes() {
+  if (!S.script) { goStep(1); return; }
+  const cfg = getSettings();
+  const btn = document.getElementById('gen-scenes-btn');
+  btn.disabled = true;
+  document.getElementById('scenes-out').innerHTML = `<div class="output-block"><span class="spinner"></span>Breaking down your scenes...</div>`;
+
+  const prompt = `You are a video director for faceless horror short-form content on ${cfg.platform}.
+
+Break this horror script into 4–6 scenes. For each scene provide:
+- The exact script excerpt (verbatim, 1–3 sentences)
+- Stock footage search query for Pexels (very specific, 4–8 words)
+- Backup search query (alternative angle)
+- Text overlay (2–4 words max — punchy)
+- Color grade note (specific: e.g. "desaturated teal, heavy vignette")
+- Transition type into next scene
+
+Script:
+${S.script}
+
+Return ONLY a valid JSON array. No markdown fences, no preamble. Format:
+[{"scene":1,"script":"...","footage":"...","backup":"...","overlay":"...","grade":"...","transition":"..."}]`;
+
+  try {
+    const result = await callClaude(prompt, 1000);
+    const clean = result.replace(/```json|```/g,'').trim();
+    S.scenes = JSON.parse(clean);
+    renderScenes();
+  } catch(e) {
+    document.getElementById('scenes-out').innerHTML = `<div class="output-block empty">Could not parse scenes. Please try regenerating.</div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderScenes() {
+  const out = document.getElementById('scenes-out');
+  out.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'scene-grid';
+  S.scenes.forEach(sc => {
+    grid.innerHTML += `<div class="scene-card">
+      <div class="scene-n">0${sc.scene}</div>
+      <div class="scene-body">
+        <span class="scene-pill">Script</span>${sc.script}<br><br>
+        <span class="scene-pill">Footage</span>${sc.footage}<br>
+        <span class="scene-pill">Backup</span>${sc.backup || '—'}<br><br>
+        <span class="scene-pill">Overlay</span>"${sc.overlay}" &nbsp;
+        <span class="scene-pill">Grade</span>${sc.grade}<br>
+        <span class="scene-pill">Transition</span>${sc.transition || 'Cut'}
+      </div>
+    </div>`;
+  });
+  out.appendChild(grid);
+}
+
+function copyScenes() {
+  if (!S.scenes.length) return;
+  const text = S.scenes.map(s =>
+    `SCENE ${s.scene}\nScript: ${s.script}\nFootage: ${s.footage}\nBackup: ${s.backup||'—'}\nOverlay: "${s.overlay}"\nGrade: ${s.grade}\nTransition: ${s.transition||'Cut'}`
+  ).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Scenes copied!'));
+}
+
+// ─── GENERATE CAPTIONS ───
+async function generateCaptions() {
+  if (!S.script) { goStep(1); return; }
+  const btn = document.getElementById('gen-cap-btn');
+  const style = document.querySelector('#cap-tags .tag.sel')?.textContent.trim() || 'Bold White';
+  S.capStyle = style;
+  btn.disabled = true;
+  setLoading('captions-out', 'Generating captions...');
+  setLoading('capcut-out', 'Building CapCut instructions...');
+
+  const prompt = `You are a caption editor for viral horror short-form video. Style: ${style}.
+
+Break this script into caption chunks optimised for ${style} captions. Each chunk: 2–5 words, punchy, rhythm-aware, designed to hold attention.
+
+Script:
+${S.script}
+
+Then on a new line write:
+CAPCUT: [3–4 specific sentences of instructions: font to use in CapCut, size, position on screen, animation style, and timing tips for this script]
+
+Output caption chunks (one per line), then the CAPCUT section. Nothing else.`;
+
+  try {
+    const result = await callClaude(prompt, 600);
+    const parts = result.split('CAPCUT:');
+    S.captions = parts[0].trim();
+    const ccInstructions = parts[1] ? parts[1].trim() : 'Use a bold, clean white sans-serif font at size 40–48. Position captions in the lower third. Add a subtle fade-in animation on each line. Sync each caption change to the natural pauses in the voiceover.';
+    setText('captions-out', S.captions);
+    setText('capcut-out', ccInstructions);
+    refreshPhonePreview();
+    startProgressAnimation();
+  } catch(e) {
+    setText('captions-out', 'Error generating captions. Try again.');
+  }
+  btn.disabled = false;
+}
+
+function startProgressAnimation() {
+  const bar = document.getElementById('prog-bar');
+  if (!bar) return;
+  let w = 0;
+  const t = setInterval(() => {
+    w = (w + 0.5) % 100;
+    bar.style.width = w + '%';
+  }, 100);
+  setTimeout(() => clearInterval(t), 8000);
+}
+
+// ─── GENERATE MUSIC ───
+async function generateMusic() {
+  if (!S.script) { goStep(1); return; }
+  const cfg = getSettings();
+  const btn = document.getElementById('gen-music-btn');
+  btn.disabled = true;
+  document.getElementById('music-out').innerHTML = `<div class="output-block"><span class="spinner"></span>Finding the perfect score...</div>`;
+  setLoading('sound-out', 'Building sound design notes...');
+
+  const prompt = `You are a music supervisor for horror short-form video content.
+
+Given this horror script and settings, recommend the perfect music and sound design.
+Genre: ${cfg.genre}
+Tone: ${cfg.tone}
+Platform: ${cfg.platform}
+
+Script:
+${S.script}
+
+Provide:
+MUSIC_RECS: A JSON array of 4 music recommendations. Each has: title (descriptive name like "Hollow Dread"), style (e.g. "dark ambient drone"), bpm (tempo), mood, free_source (a real free music site like Pixabay, Free Music Archive, YouTube Audio Library, Incompetech), search_query (exact terms to search), why (one sentence why it fits this script).
+
+SOUND_DESIGN: [4–5 specific sound effect suggestions with exact timing cues referencing the script, plus where to find free SFX (Freesound.org, Pixabay, ZapSplat)]
+
+Return MUSIC_RECS JSON then SOUND_DESIGN text. No markdown fences around the JSON.`;
+
+  try {
+    const result = await callClaude(prompt, 1000);
+    const musicMatch = result.match(/MUSIC_RECS:\s*([\s\S]*?)SOUND_DESIGN:/);
+    const soundMatch = result.match(/SOUND_DESIGN:([\s\S]*)/);
+
+    if (musicMatch) {
+      try {
+        const recs = JSON.parse(musicMatch[1].trim());
+        S.music = recs;
+        renderMusic(recs);
+      } catch(e2) {
+        document.getElementById('music-out').innerHTML = `<div class="output-block" id="music-text">${musicMatch[1].trim()}</div>`;
+      }
+    }
+    if (soundMatch) {
+      S.soundNotes = soundMatch[1].trim();
+      setText('sound-out', S.soundNotes);
+    }
+  } catch(e) {
+    document.getElementById('music-out').innerHTML = `<div class="output-block empty">Error fetching music recommendations. Try again.</div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderMusic(recs) {
+  const out = document.getElementById('music-out');
+  let html = `<div class="music-grid" id="music-text">`;
+  recs.forEach(r => {
+    html += `<div class="music-card">
+      <div class="music-card-title">${r.title||'Track'}</div>
+      <div class="music-card-desc">${r.style||''} · ${r.mood||''}</div>
+      <div class="music-card-meta">
+        <span class="music-tag">${r.bpm ? r.bpm+' BPM' : 'Atmospheric'}</span>
+        <span class="music-tag">${r.free_source||'Free'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text3);margin-top:8px;font-style:italic;">${r.why||''}</div>
+      <div style="font-size:12px;color:var(--red2);margin-top:6px;font-family:'Cinzel',serif;letter-spacing:0.06em;">Search: "${r.search_query||r.style}"</div>
+    </div>`;
+  });
+  html += `</div>`;
+  out.innerHTML = html;
+}
+
+// ─── GENERATE THUMBNAIL ───
+async function generateThumbnail() {
+  if (!S.script) { goStep(1); return; }
+  const cfg = getSettings();
+  const btn = document.getElementById('gen-thumb-btn');
+  btn.disabled = true;
+  document.getElementById('thumb-titles-out').innerHTML = `<div class="output-block"><span class="spinner"></span>Crafting thumbnail concepts...</div>`;
+  setLoading('thumb-brief', 'Building design brief...');
+
+  const prompt = `You are a viral YouTube thumbnail designer specialising in horror content.
+
+Based on this horror script, generate thumbnail concepts.
+Genre: ${cfg.genre}
+Platform: ${cfg.platform}
+
+Script:
+${S.script}
+
+Output:
+TITLES: A JSON array of 5 thumbnail title strings — short, punchy, uppercase, max 5 words each. These appear as big text on the thumbnail. Make them viscerally compelling.
+
+BRIEF: [A detailed 4–5 sentence design brief covering: background image description, text placement, color scheme, font style recommendation, any graphic elements like numbers or arrows, and psychological hook. Be very specific.]
+
+No markdown fences around JSON. Output TITLES JSON then BRIEF text.`;
+
+  try {
+    const result = await callClaude(prompt, 700);
+    const titlesMatch = result.match(/TITLES:\s*([\s\S]*?)BRIEF:/);
+    const briefMatch = result.match(/BRIEF:([\s\S]*)/);
+
+    if (titlesMatch) {
+      try {
+        S.thumbTitles = JSON.parse(titlesMatch[1].trim());
+        renderThumbPicker();
+        updateThumbPreview(0);
+      } catch {
+        S.thumbTitles = titlesMatch[1].trim().split('\n').filter(l=>l.trim()).map(l=>l.replace(/^[\d\.\-\*]+\s*/,'').replace(/"/g,'').trim());
+        renderThumbPicker();
+        updateThumbPreview(0);
+      }
+    }
+    if (briefMatch) {
+      S.thumbBrief = briefMatch[1].trim();
+      setText('thumb-brief', S.thumbBrief);
+    }
+
+    document.getElementById('thumb-titles-out').innerHTML = `<div class="output-block" id="thumb-raw">${S.thumbTitles.map((t,i)=>`${i+1}. ${t}`).join('\n')}</div>`;
+  } catch(e) {
+    document.getElementById('thumb-titles-out').innerHTML = `<div class="output-block empty">Error. Try again.</div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderThumbPicker() {
+  const row = document.getElementById('thumb-pick');
+  row.innerHTML = '';
+  S.thumbTitles.forEach((t,i) => {
+    const tag = document.createElement('div');
+    tag.className = 'tag' + (i===0?' sel':'');
+    tag.textContent = `Option ${i+1}`;
+    tag.onclick = () => {
+      document.querySelectorAll('#thumb-pick .tag').forEach(x=>x.classList.remove('sel'));
+      tag.classList.add('sel');
+      updateThumbPreview(i);
+    };
+    row.appendChild(tag);
+  });
+}
+
+function updateThumbPreview(idx) {
+  const title = S.thumbTitles[idx] || 'HORROR SHORT';
+  const cfg = getSettings();
+  document.getElementById('thumb-title').textContent = title;
+  document.getElementById('thumb-sub').textContent = cfg.genre + ' · ' + cfg.platform;
+  document.getElementById('thumb-num').textContent = '#' + (idx+1);
+}
+
+// ─── GENERATE SCHEDULE ───
+async function generateSchedule() {
+  const cfg = getSettings();
+  const btn = document.getElementById('gen-sched-btn');
+  const freq = document.querySelector('#freq-tags .tag.sel')?.textContent.trim() || '3x / Week';
+  const tz = document.querySelector('#tz-tags .tag.sel')?.textContent.trim() || 'EST (New York)';
+  btn.disabled = true;
+  document.getElementById('schedule-out').innerHTML = `<div class="output-block"><span class="spinner"></span>Mapping your content calendar...</div>`;
+  setLoading('growth-out', 'Building growth strategy...');
+
+  const prompt = `You are a social media growth strategist specialising in horror content on ${cfg.platform}.
+
+Create a 4-week posting schedule for a faceless horror shorts channel.
+Posting frequency: ${freq}
+Timezone: ${tz}
+Genre: ${cfg.genre}
+
+Output:
+SCHEDULE: Plain text 4-week calendar. Each week on one line showing posting days and optimal times. Be specific (e.g. "Week 1: Mon 7pm, Wed 8pm, Fri 9pm"). Add a brief content angle for each post (e.g. "neighbour horror", "phone story", "sleep paralysis").
+
+GROWTH: [5 specific, actionable growth tips for a new horror shorts channel — cover: hook timing, comment engagement tactic, trending audio use, cross-platform strategy, and one underused tactic most creators miss]
+
+Output SCHEDULE text then GROWTH text with those labels.`;
+
+  try {
+    const result = await callClaude(prompt, 900);
+    const schedMatch = result.match(/SCHEDULE:([\s\S]*?)GROWTH:/);
+    const growthMatch = result.match(/GROWTH:([\s\S]*)/);
+
+    S.schedule = schedMatch ? schedMatch[1].trim() : result;
+    S.growth = growthMatch ? growthMatch[1].trim() : '';
+
+    document.getElementById('schedule-out').innerHTML = `<div class="output-block" id="sched-raw" style="font-size:14px;">${S.schedule}</div>`;
+    if (S.growth) setText('growth-out', S.growth);
+  } catch(e) {
+    document.getElementById('schedule-out').innerHTML = `<div class="output-block empty">Error generating schedule. Try again.</div>`;
+  }
+  btn.disabled = false;
+}
+
+// ─── BUILD EXPORT ───
+async function buildExport() {
+  const btn = document.getElementById('build-exp-btn');
+  btn.disabled = true;
+  const out = document.getElementById('export-all');
+  out.innerHTML = `<div class="output-block"><span class="spinner"></span>Building your complete content pack...</div>`;
+
+  const cfg = getSettings();
+
+  const prompt = `Generate final content metadata for a horror short-form video.
+Genre: ${cfg.genre}, Tone: ${cfg.tone}, Platform: ${cfg.platform}
+Script excerpt: ${S.script.substring(0,200)}
+
+Output exactly:
+TITLES: [5 viral video title options, numbered]
+DESCRIPTION: [3-sentence atmospheric video description]
+HASHTAGS: [28 hashtags as one line, no numbering]
+
+Output only these three labeled sections.`;
+
+  try {
+    const result = await callClaude(prompt, 700);
+
+    const tMatch = result.match(/TITLES:([\s\S]*?)DESCRIPTION:/);
+    const dMatch = result.match(/DESCRIPTION:([\s\S]*?)HASHTAGS:/);
+    const hMatch = result.match(/HASHTAGS:([\s\S]*)/);
+
+    const titles = tMatch ? tMatch[1].trim() : '— Generate script first —';
+    const desc = dMatch ? dMatch[1].trim() : '';
+    const hash = hMatch ? hMatch[1].trim() : '';
+
+    S.exportPack = { titles, desc, hash };
+
+    out.innerHTML = `
+      <div class="export-section">
+        <h3>Script</h3>
+        <div class="export-block" id="exp-script">${S.script||'No script generated.'}<div class="copy-corner" onclick="copyEl('exp-script')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Title Options</h3>
+        <div class="export-block" id="exp-titles">${titles}<div class="copy-corner" onclick="copyEl('exp-titles')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Captions</h3>
+        <div class="export-block" id="exp-caps">${S.captions||'No captions generated.'}<div class="copy-corner" onclick="copyEl('exp-caps')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Video Description</h3>
+        <div class="export-block" id="exp-desc">${desc}<div class="copy-corner" onclick="copyEl('exp-desc')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Hashtags</h3>
+        <div class="export-block" id="exp-hash">${hash}<div class="copy-corner" onclick="copyEl('exp-hash')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Posting Schedule</h3>
+        <div class="export-block" id="exp-sched">${S.schedule||'No schedule generated.'}<div class="copy-corner" onclick="copyEl('exp-sched')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Music Recommendations</h3>
+        <div class="export-block" id="exp-music">${S.soundNotes||'No music generated.'}<div class="copy-corner" onclick="copyEl('exp-music')">Copy</div></div>
+      </div>
+      <div class="export-section">
+        <h3>Thumbnail Brief</h3>
+        <div class="export-block" id="exp-thumb">${S.thumbBrief||'No thumbnail generated.'}<div class="copy-corner" onclick="copyEl('exp-thumb')">Copy</div></div>
+      </div>
+    `;
+  } catch(e) {
+    out.innerHTML = `<div class="output-block empty">Error building pack. Try again.</div>`;
+  }
+  btn.disabled = false;
+}
+
+function copyFullExport() {
+  const pack = `═══ REELDARK COMPLETE CONTENT PACK ═══
+
+SCRIPT:
+${S.script||'—'}
+
+VOICEOVER DIRECTION:
+${S.voDir||'—'}
+
+CAPTIONS:
+${S.captions||'—'}
+
+SCHEDULE:
+${S.schedule||'—'}
+
+GROWTH TIPS:
+${S.growth||'—'}
+
+THUMBNAIL BRIEF:
+${S.thumbBrief||'—'}
+
+SOUND DESIGN:
+${S.soundNotes||'—'}
+
+═══════════════════════════════════
+Generated by ReelDark Horror Content Studio`;
+
+  navigator.clipboard.writeText(pack).then(() => showToast('Full pack copied!'));
+}
+
+function downloadExport() {
+  const pack = `REELDARK COMPLETE CONTENT PACK
+Generated: ${new Date().toLocaleDateString()}
+${'='.repeat(50)}
+
+SCRIPT:
+${S.script||'—'}
+
+VOICEOVER DIRECTION:
+${S.voDir||'—'}
+
+HOOK ANALYSIS:
+${S.hook||'—'}
+
+CAPTIONS (${S.capStyle}):
+${S.captions||'—'}
+
+POSTING SCHEDULE:
+${S.schedule||'—'}
+
+GROWTH STRATEGY:
+${S.growth||'—'}
+
+THUMBNAIL BRIEF:
+${S.thumbBrief||'—'}
+
+SOUND DESIGN NOTES:
+${S.soundNotes||'—'}
+
+${'='.repeat(50)}
+ReelDark Horror Content Studio`;
+
+  const blob = new Blob([pack], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reeldark-${Date.now()}.txt`;
+  a.click();
+  showToast('Downloading...');
+}
+
+function startOver() {
+  Object.assign(S, {
+    script:'',voDir:'',hook:'',scenes:[],captions:'',
+    capStyle:'Bold White',music:'',soundNotes:'',
+    thumbTitles:[],thumbBrief:'',schedule:'',growth:'',exportPack:''
+  });
+  // Reset all outputs
+  ['script-out','vo-out','hook-out','captions-out','capcut-out','sound-out','thumb-brief','growth-out'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){el.textContent=id==='script-out'?'Generate your script below.':'Generate script first...';el.classList.add('empty');}
+  });
+  ['scenes-out','music-out','thumb-titles-out','schedule-out','export-all'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = `<div class="output-block empty">Complete previous steps first.</div>`;
+  });
+  document.getElementById('phone-caps').innerHTML = `<span class="phone-caption-line">Preview</span><span class="phone-caption-line">appears here</span>`;
+  document.getElementById('thumb-title').textContent = 'Generate\nThumbnail';
+  document.getElementById('thumb-pick').innerHTML = '';
+  document.getElementById('seed').value = '';
+  goStep(0);
+}
+</script>
+</body>
+</html>
